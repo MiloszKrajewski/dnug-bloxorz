@@ -1,0 +1,17 @@
+{
+  "name": "handover-documentation",
+  "version": "1.0.0",
+  "description": "Handover Documentation",
+  "main": "index.js",
+  "scripts": {
+    "build": "__build__"
+  },
+  "author": "Milosz Krajewski",
+  "license": "ISC",
+  "devDependencies": {
+    "markdown-styles": "^3.1.8",
+    "diagrams": "^0.8.2"
+  },
+  "dependencies": {
+  }
+}

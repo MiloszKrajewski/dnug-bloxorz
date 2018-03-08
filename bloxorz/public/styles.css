@@ -1,0 +1,17 @@
+body { 
+    margin: 0; 
+    width: 100%; 
+    position: relative;
+}
+#canvas {
+    background-color: blue;
+    height: 100vh;
+    width: 100%;
+    display: block;
+}
+#start { 
+    padding: 8px; 
+    position: fixed; 
+    bottom: 8px; 
+    right: 8px; 
+}

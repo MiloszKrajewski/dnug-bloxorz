@@ -1,0 +1,7 @@
+{
+    "Markdown2Html": {
+        "folder": "./src",
+        "include": "*",
+        "command": "__build__.cmd"
+    }
+}
