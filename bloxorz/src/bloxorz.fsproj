@@ -3,7 +3,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="App.fs" />
+    <Compile Include="Polyfill.fs" />
+    <Compile Include="Bloxorz.fs" />
+    <Compile Include="BloxorzApp.fs" />
   </ItemGroup>
   <Import Project="..\.paket\Paket.Restore.targets" />
 </Project>
