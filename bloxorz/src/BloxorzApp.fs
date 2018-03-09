@@ -5,7 +5,7 @@ open Fable.Core.JsInterop
 open Domain
 open Fable
 
-module Main = 
+module Main =
     let window = Browser.window
     let element name = Browser.document.getElementById(name)
     let canvas = element("canvas") :?> Browser.HTMLCanvasElement
@@ -15,8 +15,8 @@ module Main =
     let resize () =
         canvas.width <- window.innerWidth
         canvas.height <- window.innerHeight
-    
-    let drawBloxor (x, y) (color: string) = 
+
+    let drawBloxor (x, y) (color: string) =
         context.fillStyle <- !^ color
         context.fillRect (float (x * 22 + 8), float (y * 22 + 8), 21., 21.)
 
@@ -36,14 +36,14 @@ module Main =
                 window.setTimeout (action, 1000) |> ignore
         action ()
 
-    let paint world bloxor = 
+    let paint world bloxor =
         printfn "%A" bloxor
         drawWorld world
         let a, b = bloxor
         drawBloxor a "blue"
         drawBloxor b "blue"
 
-    let world = 
+    let world =
         [
             "      xxxxxxx"
             "xxxx  xxx  xx"
@@ -51,13 +51,13 @@ module Main =
             "xAxx       xxBx"
             "xxxx       xxxx"
             "            xxx"
-        ] |> World.parse
+        ] |> Domain.parse
 
-    let solution = 
-        world 
-        |> Solver.solve 
-        |> Option.map snd 
-        |> Option.defaultValue [] 
+    let solution =
+        world
+        |> Solver.solve7
+        |> Option.map snd
+        |> Option.defaultValue []
         |> List.rev
         |> List.scan (Bloxor.move) (Bloxor.make world.A)
 

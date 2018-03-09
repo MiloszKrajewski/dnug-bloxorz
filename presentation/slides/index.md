@@ -70,6 +70,10 @@ http://abcarcade.com/fullscreen.php?id=1573
 
 ![world-2](images/world-2.png)
 
+---
+
+![Move](images/bloxor-move.png)
+
 ***
 
 ## But where the fuck is Bruce Willis?
@@ -79,3 +83,5 @@ http://abcarcade.com/fullscreen.php?id=1573
 https://www.youtube.com/watch?v=6cAbgAaEOVE
 
 ***
+
+![Move](images/diehard.png)

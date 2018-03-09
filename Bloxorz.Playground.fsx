@@ -5,9 +5,9 @@ open Bloxorz
 
 let world =
     """
-        AB
-        xx
-        xx
+        xxxx
+        xBxx
+        Axx
     """.Split([|'\n'|])
 world |> World.parse |> Solver.solve
 

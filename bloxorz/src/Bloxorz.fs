@@ -1,54 +1,38 @@
 namespace Bloxorz
 
-[<AutoOpen>]
-module Fx = 
-    let tap func arg = func arg; arg
-    
-module Seq = 
-    let tap func seq = seq |> Seq.map (tap func)
-
 module BFS =
     open System.Collections.Generic
 
-    let generic test mark fanout node = 
+    let generic test mark fanout (node: 'node) =
         let queue = Queue()
-
-        let empty () = queue.Count = 0
-        let pop () = queue.Dequeue ()
-        let push n = queue.Enqueue n
-
-        node |> push
+        queue.Enqueue(node)
 
         seq {
-            while not (empty ()) do
-                let n = pop ()
-                yield n
-                mark n
-                n |> fanout |> Seq.filter test |> Seq.iter push
+            while queue.Count <> 0 do
+                let curr = queue.Dequeue ()
+                yield curr
+                mark curr
+                curr |> fanout |> Seq.filter test |> Seq.iter (queue.Enqueue)
         }
-
-    let generic' test mark fanout node = 
-        let queue = Queue([node])
-        let rec popAll () = seq { if queue.Count = 0 then yield queue.Dequeue (); yield! popAll () }
-        let push n = queue.Enqueue n
-        seq { yield! popAll () |> Seq.tap (tap mark >> fanout >> Seq.filter test >> Seq.iter push) }
 
     let traverse idof fanout node =
         let visited = HashSet()
-        let test n = visited.Contains (idof n) |> not
-        let mark n = visited.Add (idof n) |> ignore
+        let test node = not (visited.Contains (idof node))
+        let mark node = visited.Add (idof node) |> ignore
         generic test mark fanout node
 
     let trace idof fanout node =
-        let idof' node = let state, _ = node in idof state
-        let fanout' node = let state, history = node in state |> fanout |> Seq.map (fun (a, n) -> (n, a :: history))
+        let idof' (state, _) = idof state
+        let fanout' node =
+            let state, history = node
+            state |> fanout |> Seq.map (fun (action, newstate) -> (newstate, action :: history))
         let node' = node, []
         traverse idof' fanout' node'
 
 module Domain =
     type Position = int * int
     type Bloxor = Position * Position
-    type Move = | North | South | East | West
+    type Move = | North | East | South | West
     type Path = Bloxor * Move list
     type World = {
         A: Position
@@ -56,38 +40,32 @@ module Domain =
         IsValid: Position -> bool
     }
 
-module World =
-    open Domain
-    let infinite a b = { A = a; B = b; IsValid = fun _ -> true }
+    let infite A B = { A = A; B = B; IsValid = fun _ -> true }
 
     let parse lines =
-        let map = lines |> Seq.mapi (fun y l -> l |> Seq.mapi (fun x c -> (x, y), c)) |> Seq.collect id |> Map.ofSeq
-        let a = map |> Map.findKey (fun _ c -> c = 'A')
-        let b = map |> Map.findKey (fun _ c -> c = 'B')
+        let map =
+            lines
+            |> Seq.mapi (fun y l -> l |> Seq.mapi (fun x c -> (x, y), c))
+            |> Seq.collect id
+            |> Map.ofSeq
+        let a = map |> Map.findKey (fun k c -> c = 'A')
+        let b = map |> Map.findKey (fun k c -> c = 'B')
         let valid k = map |> Map.tryFind k |> Option.filter (fun c -> c <> ' ') |> Option.isSome
         { A = a; B = b; IsValid = valid }
 
 module Bloxor =
     open Domain
-
-    let shift da db bloxor =
-        let shift1 (dx, dy) (x, y) = (x + dx, y + dy)
-        let a, b = bloxor
-        shift1 da a, shift1 db b
-
     let (|IsStanding|IsHorizontal|IsVertical|) bloxor =
         let ((ax, ay), (bx, by)) = bloxor
         match bx - ax, by - ay with
         | 0, 0 -> IsStanding
         | 1, 0 -> IsHorizontal
         | 0, 1 -> IsVertical
-        | _ -> failwithf "Invalid bloxor: (%d,%d),(%d,%d)" ax ay bx by
-
-    let make position = (position, position)
+        | _ -> failwithf "Invalid bloxor (%d,%d) (%d,%d)" ax ay bx by
 
     let move bloxor direction =
-        let shiftX x1 x2 = shift (x1, 0) (x2, 0)
-        let shiftY y1 y2 = shift (0, y1) (0, y2)
+        let shiftX x1 x2 ((ax, ay), (bx, by)) = (ax + x1, ay), (bx + x2, by)
+        let shiftY y1 y2 ((ax, ay), (bx, by)) = (ax, ay + y1), (bx, by + y2)
         match bloxor, direction with
         | IsStanding, North -> bloxor |> shiftY -2 -1
         | IsStanding, East -> bloxor |> shiftX 1 2
@@ -102,16 +80,20 @@ module Bloxor =
         | IsVertical, South -> bloxor |> shiftY 2 1
         | IsVertical, West -> bloxor |> shiftX -1 -1
 
+    let make (position: Position): Bloxor = position, position
+
 module Solver =
     open Domain
-
-    let solve world =
-        let isValid bloxor = let (a, b) = bloxor in world.IsValid a && world.IsValid b
+    open Bloxor
+    open BFS
+    let solve7 world =
+        let isValid (a, b) = world.IsValid a && world.IsValid b
         let validMoves bloxor =
-            [North; East; South; West]
-            |> Seq.map (fun d -> d, Bloxor.move bloxor d)
-            |> Seq.filter (fun (_, b) -> isValid b)
-        let start = Bloxor.make world.A
-        let goal = Bloxor.make world.B
+            [North; South; East; West]
+            |> Seq.map (fun direction -> direction, move bloxor direction)
+            |> Seq.filter (fun (_, newbloxor) -> isValid newbloxor)
+        let start = make world.A
+        let goal = make world.B
         let idof ((ax, ay), (bx, by)) = sprintf "%d.%d.%d.%d" ax ay bx by
-        BFS.trace idof validMoves start |> Seq.tryFind (fun (bloxor, _) -> bloxor = goal)
+        BFS.trace idof validMoves start
+        |> Seq.tryFind (fun (bloxor, history) -> bloxor = goal)
